@@ -1,37 +1,51 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const axios = require('axios');
-const Users = require('../collections/users');
+const UserService = require("../services/user.service");
 
-router.get('/', async (req, res) => {
-  try{
-    let user = await Users.findOne();
-    return res.json({code: 200, data: {user}})
+router.get("/", async (req, res) => {
+  const userId = req.session.userId;
+
+  if (userId) {
+    const user = await UserService.findById(userId);
+
+    return user ? res.status(200).json(user) : res.status(401).end();
+  } else {
+    res.status(401).end();
   }
-  catch (err){
- return res.status(500).json({message:'error in get user',error:err})
+});
+
+router.post("/register", async (req, res) => {
+  const { userId, fullName, password } = req.body;
+  const user = UserService.create({ userId, fullName, password });
+
+  if (user) {
+    req.session.userId = user._id;
+
+    res.status(200).json(user);
+  } else {
+    res.status(500).end();
   }
-})
+});
 
-router.post('/createUser',async (req, res) => {
-  try{    
-const {
-  userId,
-    fullName,
-    password
-  } = req.body
+router.post("/login", async (req, res) => {
+  const { userId, password } = req.body;
+  const user = await UserService.findByIdAndPassword(userId, password);
 
-  const newUser =  new Users({
-    userId,
-    fullName,
-    password
-  })
-  const savedUser = await newUser.save()
-  return res.json({code: 200, data: {savedUser}})
-} catch (err){
-    console.log(err);
-    return res.status(500).json({message:'error in save user',error:err})
-     }
-})
+  if (user) {
+    req.session.userId = user._id.toString();
+
+    res.status(200).json(user);
+  } else {
+    res.status(401).end();
+  }
+});
+
+router.get("/logout", async (req, res) => {
+  if ("userId" in req.session) {
+    req.session.userId = undefined;
+  }
+
+  res.sendStatus(204);
+});
 
 module.exports = router;
