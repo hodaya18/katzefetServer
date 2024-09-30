@@ -3,7 +3,7 @@
 // const path = require('path');
 // const cookieParser = require('cookie-parser');
 // const logger = require('morgan');
-// const mongoose = require('mongoose');
+// import mongoose from 'mongoose'
 
 // db = mongoose.createConnection("mongodb://localhost:27017/")
 
@@ -42,27 +42,39 @@
 // });
 
 // module.exports = app;
-const express = require('express')
-const mongoose = require('mongoose')
+import express from "express"
+import mongoose from "mongoose"
 const app = express()
 
 const url = "mongodb://localhost:27017/katzefet"
-mongoose.connect(url,{
-    useNewUrlParser:true,
-    useUnifiedTopology:true
-}).then(()=>console.log('connected to db')).catch((err)=>console.log(err))
+mongoose
+  .connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("connected to db"))
+  .catch((err) => console.log(err))
 
-const usersRouter = require('./routes/users');
-app.use(express.urlencoded({ extended: true }));
+import usersRouter from "./routes/users.route.js"
+import storeItemsRouter from "./routes/storeItems.route.js"
+import cors from "cors"
+
+app.use(
+  cors({
+    origin: "http://localhost:1234",
+  })
+)
+app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
-app.use('/users', usersRouter);
+app.use("/users", usersRouter)
+app.use("/storeItems", storeItemsRouter)
 
-app.get('/',(req,res)=>{
-    res.send('API is running')
+app.get("/", (req, res) => {
+  res.send("API is running")
 })
 
-console.log(process);
+console.log(process)
 
 const PORT = 5000
-app.listen(PORT,()=>console.log(`Server running in port ${PORT}`))
+app.listen(PORT, () => console.log(`Server running in port ${PORT}`))
